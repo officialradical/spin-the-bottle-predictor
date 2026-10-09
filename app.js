@@ -1,30 +1,37 @@
-// SUPABASE PROJECT SETTINGS
-const SUPABASE_URL = "PASTE_YOUR_SUPABASE_PROJECT_URL_HERE";
-const SUPABASE_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE";
+// =====================================
+// SUPABASE CONFIGURATION
+// =====================================
+
+const SUPABASE_URL = "https://fcxdazlpeagmuagsayja.supabase.co";
+
+const SUPABASE_KEY = "sb_publishable_DpRoplNSvHveMpStM5NolQ_ofoVRbeL";
+
+// =====================================
+// INITIALIZE WEBSITE
+// =====================================
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const get = (id) => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
 
-  const signupForm = get("signupForm");
-  const loginForm = get("loginForm");
+  const signupForm = $("signupForm");
+  const loginForm = $("loginForm");
 
-  const signupButton = get("signupButton");
-  const loginButton = get("loginButton");
+  const signupButton = $("signupButton");
+  const loginButton = $("loginButton");
+  const logoutButton = $("logoutButton");
 
-  const message = get("message");
-  const loginMessage = get("loginMessage");
+  const message = $("message");
+  const loginMessage = $("loginMessage");
+  const dashboardMessage = $("dashboardMessage");
 
-  const account = get("account");
-  const dashboard = get("userDashboard");
+  const account = $("account");
+  const dashboard = $("userDashboard");
 
-  const dashboardEmail = get("dashboardEmail");
-  const dashboardUserId = get("dashboardUserId");
-  const dashboardMessage = get("dashboardMessage");
+  const dashboardEmail = $("dashboardEmail");
+  const dashboardUserId = $("dashboardUserId");
 
-  const logoutButton = get("logoutButton");
-
-  if (get("year")) {
-    get("year").textContent = new Date().getFullYear();
+  if ($("year")) {
+    $("year").textContent = new Date().getFullYear();
   }
 
   function showMessage(element, text, success = false) {
@@ -45,72 +52,52 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (account) account.hidden = true;
 
     if (dashboardEmail) {
-      dashboardEmail.textContent = user.email || "Unavailable";
+      dashboardEmail.textContent = user.email || "";
     }
 
     if (dashboardUserId) {
-      dashboardUserId.textContent = user.id || "Unavailable";
+      dashboardUserId.textContent = user.id || "";
     }
   }
 
-  let supabaseClient = null;
+  let client;
 
   // CONNECT TO SUPABASE
   try {
     if (!window.supabase) {
-      throw new Error(
-        "The account service could not load. Refresh the website and try again."
-      );
+      throw new Error("Supabase failed to load. Refresh the website.");
     }
 
-    if (
-      SUPABASE_URL.includes("PASTE_YOUR") ||
-      SUPABASE_KEY.includes("PASTE_YOUR")
-    ) {
-      throw new Error(
-        "Add your actual Supabase project URL and publishable key in app.js."
-      );
-    }
-
-    supabaseClient = window.supabase.createClient(
+    client = window.supabase.createClient(
       SUPABASE_URL,
       SUPABASE_KEY
     );
 
-    const { data, error } =
-      await supabaseClient.auth.getSession();
+    const { data, error } = await client.auth.getSession();
 
     if (error) throw error;
 
-    showDashboard(data.session?.user || null);
+    showDashboard(data.session ? data.session.user : null);
 
-    supabaseClient.auth.onAuthStateChange(
-      (_event, session) => {
-        showDashboard(session?.user || null);
-      }
-    );
+    client.auth.onAuthStateChange((_event, session) => {
+      showDashboard(session ? session.user : null);
+    });
+
   } catch (error) {
-    console.error("Supabase setup error:", error);
+    console.error("Supabase error:", error);
 
-    showMessage(
-      message,
-      "Account service error: " + error.message
-    );
-
-    showMessage(
-      loginMessage,
-      "Account service error: " + error.message
-    );
+    showMessage(message, "Connection error: " + error.message);
+    showMessage(loginMessage, "Connection error: " + error.message);
   }
 
   // UP / DOWN DEMO
-  const predictButton = get("predictBtn");
-  const result = get("result");
+  const predictButton = $("predictBtn");
+  const result = $("result");
 
   if (predictButton && result) {
     predictButton.addEventListener("click", () => {
-      const outcome = Math.random() < 0.5 ? "UP" : "DOWN";
-      result.textContent = "Demo result: " + outcome;
+      result.textContent =
+        "Demo result: " + (Math.random() < 0.5 ? "UP" : "DOWN");
     });
   }
 
@@ -119,93 +106,63 @@ document.addEventListener("DOMContentLoaded", async () => {
     signupForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const email = get("signupEmail").value.trim();
-      const password = get("signupPassword").value;
+      const email = $("signupEmail")?.value.trim();
+      const password = $("signupPassword")?.value;
 
       if (!email || !password) {
-        showMessage(
-          message,
-          "Please enter your email and password."
-        );
+        showMessage(message, "Enter your email and password.");
         return;
       }
 
       if (password.length < 6) {
-        showMessage(
-          message,
-          "Your password must contain at least 6 characters."
-        );
+        showMessage(message, "Password must contain at least 6 characters.");
         return;
       }
 
-      if (!supabaseClient) {
-        showMessage(
-          message,
-          "The account service is not connected. Check your Supabase settings."
-        );
+      if (!client) {
+        showMessage(message, "Supabase is not connected. Refresh and try again.");
         return;
       }
 
       signupButton.disabled = true;
       signupButton.textContent = "Creating account...";
 
-      showMessage(
-        message,
-        "Creating your account...",
-        true
-      );
-
       try {
-        const { data, error } =
-          await supabaseClient.auth.signUp({
-            email: email,
-            password: password
-          });
+        const { data, error } = await client.auth.signUp({
+          email,
+          password
+        });
 
         if (error) throw error;
 
         if (data.user && data.session) {
           signupForm.reset();
-
           showDashboard(data.user);
 
           showMessage(
             dashboardMessage,
-            "Account created successfully! You are now logged in.",
+            "Account created successfully! You are logged in.",
             true
           );
 
-          dashboard.scrollIntoView({
+          dashboard?.scrollIntoView({
             behavior: "smooth",
             block: "start"
           });
 
-        } else if (data.user) {
-          showMessage(
-            message,
-            "Your account was created, but no login session was returned. Check that Confirm email is turned off in Supabase."
-          );
-
         } else {
           showMessage(
             message,
-            "The account was not created. Please try again."
+            "No login session was returned. Check that Confirm email is OFF in Supabase."
           );
         }
 
       } catch (error) {
         console.error("Signup error:", error);
 
-        let errorText = error.message || "Please try again.";
-
-        if (/already registered/i.test(errorText)) {
-          errorText =
-            "This email is already registered. Please use the login form.";
-        }
-
         showMessage(
           message,
-          "Registration failed: " + errorText
+          "Registration failed: " + error.message
         );
 
       } finally {
@@ -220,64 +177,48 @@ document.addEventListener("DOMContentLoaded", async () => {
     loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const email = get("loginEmail").value.trim();
-      const password = get("loginPassword").value;
+      const email = $("loginEmail")?.value.trim();
+      const password = $("loginPassword")?.value;
 
       if (!email || !password) {
-        showMessage(
-          loginMessage,
-          "Please enter your email and password."
-        );
+        showMessage(loginMessage, "Enter your email and password.");
         return;
       }
 
-      if (!supabaseClient) {
-        showMessage(
-          loginMessage,
-          "The account service is not connected. Check your Supabase settings."
-        );
+      if (!client) {
+        showMessage(loginMessage, "Supabase is not connected.");
         return;
       }
 
       loginButton.disabled = true;
       loginButton.textContent = "Logging in...";
 
-      showMessage(
-        loginMessage,
-        "Signing you in...",
-        true
-      );
-
       try {
-        const { data, error } =
-          await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-          });
+        const { data, error } = await client.auth.signInWithPassword({
+          email,
+          password
+        });
 
         if (error) throw error;
 
-        showDashboard(data.user);
         loginForm.reset();
+        showDashboard(data.user);
 
         showMessage(
           dashboardMessage,
-          "You are now logged in.",
+          "Login successful! Welcome back.",
           true
         );
 
-        dashboard.scrollIntoView({
+        dashboard?.scrollIntoView({
           behavior: "smooth",
           block: "start"
         });
 
       } catch (error) {
-        console.error("Login error:", error);
-
         showMessage(
           loginMessage,
-          "Login failed: " +
-          (error.message || "Check your email and password.")
+          "Login failed: " + error.message
         );
 
       } finally {
@@ -290,25 +231,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   // LOG OUT
   if (logoutButton) {
     logoutButton.addEventListener("click", async () => {
-      if (!supabaseClient) return;
+      if (!client) return;
 
       logoutButton.disabled = true;
 
       try {
-        const { error } =
-          await supabaseClient.auth.signOut();
+        const { error } = await client.auth.signOut();
 
         if (error) throw error;
 
         showDashboard(null);
 
         showMessage(
-          dashboardMessage,
-          "You have logged out.",
+          message,
+          "You have logged out successfully.",
           true
         );
 
-        account.scrollIntoView({
+        account?.scrollIntoView({
           behavior: "smooth",
           block: "start"
         });
