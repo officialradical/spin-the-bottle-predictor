@@ -1,87 +1,73 @@
-// ==========================================
-// SUPABASE CONFIGURATION
-// ==========================================
-
 const SUPABASE_URL = "https://fcxdazlpeagmuagsayja.supabase.co";
-
 const SUPABASE_KEY = "sb_publishable_DpRoplNSvHveMpStM5NolQ_ofoVRbeL";
 
 let supabaseClient = null;
 
-// ==========================================
-// INITIALIZE WEBSITE
-// ==========================================
+function showMessage(text, success = false) {
+    const message = document.getElementById("message");
 
-document.addEventListener("DOMContentLoaded", function () {
+    if (message) {
+        message.textContent = text;
+        message.style.color = success ? "#4ade80" : "#ff7777";
+    } else {
+        alert(text);
+    }
+}
+
+function loadSupabase() {
+    return new Promise((resolve, reject) => {
+        if (window.supabase) {
+            resolve(window.supabase);
+            return;
+        }
+
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+
+        script.onload = () => {
+            if (window.supabase) {
+                resolve(window.supabase);
+            } else {
+                reject(new Error("Supabase failed to initialize."));
+            }
+        };
+
+        script.onerror = () => {
+            reject(new Error("Could not load the account service. Check your internet connection."));
+        };
+
+        document.head.appendChild(script);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
     const year = document.getElementById("year");
     const result = document.getElementById("result");
     const predictBtn = document.getElementById("predictBtn");
-    const signupForm = document.getElementById("signupForm");
+    const form = document.getElementById("signupForm");
     const emailInput = document.getElementById("signupEmail");
     const passwordInput = document.getElementById("signupPassword");
     const signupButton = document.getElementById("signupButton");
-    const message = document.getElementById("message");
 
-    // Update footer year
     if (year) {
         year.textContent = new Date().getFullYear();
     }
 
-    // Display messages
-    function showMessage(text, success = false) {
-        if (message) {
-            message.textContent = text;
-            message.style.color = success ? "#4ade80" : "#ff7777";
-        } else {
-            alert(text);
-        }
-    }
-
-    // Connect to Supabase
-    try {
-        if (!window.supabase) {
-            showMessage(
-                "The account service could not load. Refresh the page and try again."
-            );
-            return;
-        }
-
-        supabaseClient = window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_KEY
-        );
-    } catch (error) {
-        console.error("Supabase initialization error:", error);
-        showMessage("Could not connect to the account service.");
-        return;
-    }
-
-    // ==========================================
-    // UP / DOWN DEMO
-    // ==========================================
-
+    // Demo button
     if (predictBtn && result) {
-        predictBtn.addEventListener("click", function () {
-            const outcome = Math.random() < 0.5 ? "UP" : "DOWN";
-            result.textContent = "Demo result: " + outcome;
+        predictBtn.addEventListener("click", () => {
+            result.textContent =
+                "Demo result: " + (Math.random() < 0.5 ? "UP" : "DOWN");
         });
     }
 
-    // ==========================================
-    // CREATE ACCOUNT
-    // ==========================================
-
-    if (signupForm) {
-        signupForm.addEventListener("submit", async function (event) {
+    // Always attach the registration handler
+    if (form) {
+        form.addEventListener("submit", async (event) => {
             event.preventDefault();
 
-            const email = emailInput
-                ? emailInput.value.trim()
-                : "";
-
-            const password = passwordInput
-                ? passwordInput.value
-                : "";
+            const email = emailInput?.value.trim();
+            const password = passwordInput?.value;
 
             if (!email || !password) {
                 showMessage("Please enter your email and password.");
@@ -89,9 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             if (password.length < 6) {
-                showMessage(
-                    "Your password must contain at least 6 characters."
-                );
+                showMessage("Your password must contain at least 6 characters.");
                 return;
             }
 
@@ -100,9 +84,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 signupButton.textContent = "Creating account...";
             }
 
-            showMessage("Creating your account...", true);
+            showMessage("Connecting to create your account...", true);
 
             try {
+                const library = await loadSupabase();
+
+                if (!supabaseClient) {
+                    supabaseClient = library.createClient(
+                        SUPABASE_URL,
+                        SUPABASE_KEY
+                    );
+                }
+
                 const { data, error } =
                     await supabaseClient.auth.signUp({
                         email: email,
@@ -115,26 +108,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 if (data.session) {
                     showMessage(
-                        "Account created successfully! You are now logged in.",
+                        "Account created successfully! You are logged in.",
                         true
                     );
                 } else if (data.user) {
                     showMessage(
-                        "Your account was created, but no active session was returned. Check your Supabase email-confirmation settings.",
+                        "Account created, but no active login session was returned. Check that email confirmation is disabled in Supabase.",
                         true
                     );
                 } else {
                     showMessage(
-                        "Account creation could not be confirmed. Please try again."
+                        "The account could not be confirmed. Please try again."
                     );
                 }
             } catch (error) {
-                console.error("Registration error:", error);
-
-                showMessage(
-                    "Registration failed: " +
-                    (error.message || "Please try again.")
-                );
+                console.error("Signup error:", error);
+                showMessage("Error: " + error.message);
             } finally {
                 if (signupButton) {
                     signupButton.disabled = false;
@@ -143,25 +132,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     } else {
-        console.error("Could not find the signup form in index.html.");
+        console.error("Signup form not found. Check index.html.");
     }
-
-    // ==========================================
-    // CHECK LOGIN SESSION
-    // ==========================================
-
-    supabaseClient.auth.getSession()
-        .then(({ data, error }) => {
-            if (error) {
-                console.error("Session check error:", error);
-                return;
-            }
-
-            if (data.session) {
-                console.log("User is logged in.");
-            }
-        })
-        .catch((error) => {
-            console.error("Could not check login session:", error);
-        });
 });
