@@ -3,41 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101322">
   <title>Spin the Bottle Predictor</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
+
 <body>
   <header>
     <a class="brand" href="./index.html">✦ SPIN THE BOTTLE PREDICTOR</a>
-    <p><a href="#account">Log in</a></p>
+    <nav>
+      <a href="#account">Log in</a>
+    </nav>
   </header>
 
   <main>
     <section class="hero">
       <p>YOUR GAME HUB</p>
-      <h1>Make your next move <span>with confidence.</span></h1>
+
+      <h1>
+        Make your next move
+        <span>with confidence.</span>
+      </h1>
+
       <p>
         Explore the UP/DOWN demo, manage access vouchers,
         and keep your activity in one simple place.
       </p>
-      <p>
+
+      <div class="actions">
         <a class="button" href="#demo">Get started ↗</a>
         <a href="#how">How it works</a>
-      </p>
-      <p>✓ Mobile-friendly dashboard　✓ Simple　✓ Voucher-ready</p>
+      </div>
+
+      <p>✓ Mobile-friendly dashboard · ✓ Simple · ✓ Voucher-ready</p>
     </section>
 
     <section class="card" id="demo">
-      <h2>Sample outcome demo</h2>
-      <p>Try the UP/DOWN demonstration below.</p>
+      <div class="cardtop">
+        <p>SAMPLE OUTCOME</p>
+        <h2>UP / DOWN DEMO</h2>
+        <p>Try the demonstration below.</p>
+      </div>
 
       <div class="result">
         <p>DEMO RESULT</p>
-        <strong id="result">Ready to try?</strong>
+        <strong id="result" aria-live="polite">Ready to try?</strong>
         <button id="predictBtn" type="button">Try demo ↻</button>
       </div>
 
-      <p>
+      <p class="muted">
         Demo results are random illustrations, not predictions
         or guarantees of real outcomes.
       </p>
@@ -48,6 +62,7 @@
         <h2>Simple dashboard</h2>
         <p>A clear, mobile-friendly experience.</p>
       </article>
+
       <article>
         <h2>Voucher access</h2>
         <p>Voucher features require a connected backend.</p>
@@ -57,13 +72,17 @@
     <section class="notice" id="account">
       <h2>Create an account</h2>
       <p>Registration and login are not connected yet.</p>
-      <button id="createAccountBtn" type="button">Create account</button>
+      <button id="createAccountBtn" type="button">
+        Create account
+      </button>
       <p id="message" role="status"></p>
     </section>
   </main>
 
   <footer>
-    <p>© <span id="year"></span> Spin the Bottle Predictor · Demo only.</p>
+    <p>
+      © <span id="year"></span> Spin the Bottle Predictor · Demo only.
+    </p>
   </footer>
 
   <script src="./app.js"></script>
