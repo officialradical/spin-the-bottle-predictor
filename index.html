@@ -8,46 +8,46 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+
   <header class="top">
-    <a class="brand" href="./index.html">✦ SPIN THE BOTTLE PREDICTOR</a>
+    <a class="brand" href="./index.html">
+      ✦ SPIN THE BOTTLE PREDICTOR
+    </a>
     <nav>
-      <a href="#account">Log in / Sign up</a>
+      <a href="#account">Account</a>
+      <a href="#demo">Demo</a>
     </nav>
   </header>
 
   <main>
     <section class="hero">
       <div class="intro">
-        <p>YOUR GAME HUB</p>
-        <h1>Make your next move <span>with confidence.</span></h1>
-        <p>
-          Explore the UP/DOWN demo and manage your account
-          in one simple place.
-        </p>
+        <p class="eyebrow">YOUR GAME HUB</p>
+        <h1>Make your next move
+          <span>with confidence.</span>
+        </h1>
+        <p>A simple, mobile-friendly place to manage your account and try the demo.</p>
         <a class="button" href="#demo">Get started ↗</a>
-        <a href="#how">How it works</a>
-        <p>✓ Mobile-friendly dashboard · ✓ Simple</p>
       </div>
     </section>
 
     <section class="card" id="demo">
-      <p>SAMPLE OUTCOME</p>
+      <p class="eyebrow">SAMPLE OUTCOME</p>
       <h2>UP / DOWN DEMO</h2>
       <p>Try the demonstration below.</p>
 
       <div class="result-card">
-        <p>DEMO RESULT</p>
+        <p class="eyebrow">DEMO RESULT</p>
         <h2 id="result">Ready to try?</h2>
         <button id="predictBtn" type="button">Try demo ↻</button>
       </div>
 
-      <p>
-        Demo results are random illustrations, not predictions
-        or guarantees of real outcomes.
+      <p class="muted">
+        Demo results are random illustrations, not predictions or guarantees of real outcomes.
       </p>
     </section>
 
-    <section class="features" id="how">
+    <section class="features">
       <article>
         <h2>Simple dashboard</h2>
         <p>A clear, mobile-friendly experience.</p>
@@ -55,7 +55,7 @@
 
       <article>
         <h2>Voucher access</h2>
-        <p>Voucher features require a connected backend.</p>
+        <p>Voucher features require a connected backend and are not enabled yet.</p>
       </article>
     </section>
 
@@ -83,14 +83,72 @@
           required
         >
 
-        <button id="signupButton" type="submit">Create account</button>
-        <p id="message" role="status"></p>
+        <button id="signupButton" type="submit">
+          Create account
+        </button>
+
+        <p id="message" role="status" aria-live="polite"></p>
       </form>
+
+      <hr>
+
+      <h2>Log in</h2>
+      <p>Already have an account? Sign in here.</p>
+
+      <form id="loginForm">
+        <label for="loginEmail">Email address</label>
+        <input
+          id="loginEmail"
+          type="email"
+          placeholder="Enter your email"
+          autocomplete="username"
+          required
+        >
+
+        <label for="loginPassword">Password</label>
+        <input
+          id="loginPassword"
+          type="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        >
+
+        <button id="loginButton" type="submit">
+          Log in
+        </button>
+
+        <p id="loginMessage" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="notice" id="userDashboard" hidden>
+      <h2>My dashboard</h2>
+      <p>You are signed in successfully.</p>
+
+      <p>
+        <strong>Email:</strong>
+        <span id="dashboardEmail"></span>
+      </p>
+
+      <p>
+        <strong>Account ID:</strong>
+        <span id="dashboardUserId"></span>
+      </p>
+
+      <p><strong>Account status:</strong> Active</p>
+
+      <button id="logoutButton" type="button">Log out</button>
+
+      <p id="dashboardMessage" role="status" aria-live="polite"></p>
     </section>
   </main>
 
   <footer>
-    <p>© <span id="year"></span> Spin the Bottle Predictor · Demo only.</p>
+    <p>
+      © <span id="year"></span>
+      Spin the Bottle Predictor · Demo only.
+    </p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
