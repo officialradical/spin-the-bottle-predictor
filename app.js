@@ -1,153 +1,113 @@
-// ==========================================
 // SUPABASE CONFIGURATION
-// ==========================================
+const SUPABASE_URL = "https://fcxdazlpeagmuagsav.supabase.co";
+const SUPABASE_KEY = "PASTE_YOUR_EXISTING_SUPABASE_PUBLISHABLE_KEY_HERE";
 
-const SUPABASE_URL = "https://fcxdazlpeagmuagsayja.supabase.co";
+// LOAD SUPABASE
+const script = document.createElement("script");
+script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
 
-const SUPABASE_KEY = "sb_publishable_DpRoplNSvHveMpStM5NolQ_ofoVRbeL";
+script.onload = function () {
+  startApp();
+};
 
-// ==========================================
-// INITIALIZE WEBSITE
-// ==========================================
+script.onerror = function () {
+  showMessage("Could not load the sign-up service. Please refresh.");
+};
 
-document.addEventListener("DOMContentLoaded", function () {
-  // Update footer year
+document.head.appendChild(script);
+
+// DISPLAY MESSAGES
+function showMessage(text) {
+  const message = document.getElementById("message");
+
+  if (message) {
+    message.textContent = text;
+    message.style.display = "block";
+  } else {
+    alert(text);
+  }
+}
+
+// START WEBSITE
+function startApp() {
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  const form = document.getElementById("signupForm");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const signupButton = document.getElementById("signupButton");
   const year = document.getElementById("year");
 
   if (year) {
     year.textContent = new Date().getFullYear();
   }
 
-  // ==========================================
-  // UP / DOWN DEMO
-  // Note: This is random, not a real prediction.
-  // ==========================================
-
-  const predictBtn = document.getElementById("predictBtn");
-  const result = document.getElementById("result");
-
-  if (predictBtn && result) {
-    predictBtn.addEventListener("click", function () {
-      const outcomes = ["UP", "DOWN"];
-
-      const choice =
-        outcomes[Math.floor(Math.random() * outcomes.length)];
-
-      result.textContent = "Demo result: " + choice;
-    });
+  if (!form) {
+    console.error("Signup form not found. Check index.html.");
+    return;
   }
 
-  // ==========================================
-  // SUPABASE CLIENT
-  // ==========================================
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
 
-  const form = document.getElementById("signupForm");
-  const message = document.getElementById("message");
-  const signupButton = document.getElementById("signupButton");
+    const email = emailInput ? emailInput.value.trim() : "";
+    const password = passwordInput ? passwordInput.value : "";
 
-  let supabaseClient = null;
-
-  function showMessage(text) {
-    if (message) {
-      message.textContent = text;
-    } else {
-      alert(text);
-    }
-  }
-
-  function getSupabaseClient() {
-    if (supabaseClient) {
-      return supabaseClient;
+    if (!email || !password) {
+      showMessage("Please enter your email and password.");
+      return;
     }
 
-    if (!window.supabase) {
-      throw new Error(
-        "Supabase failed to load. Refresh the page and try again."
-      );
+    if (password.length < 6) {
+      showMessage("Your password must contain at least 6 characters.");
+      return;
     }
 
-    supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
+    if (signupButton) {
+      signupButton.disabled = true;
+      signupButton.textContent = "Creating account...";
+    }
 
-    return supabaseClient;
-  }
+    showMessage("Please wait while we create your account...");
 
-  // ==========================================
-  // CREATE ACCOUNT
-  // ==========================================
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password
+      });
 
-  if (form) {
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
-
-      const emailInput = document.getElementById("signupEmail");
-      const passwordInput = document.getElementById("signupPassword");
-
-      if (!emailInput || !passwordInput) {
-        showMessage("The email or password field is missing in index.html.");
+      if (error) {
+        showMessage("Sign-up failed: " + error.message);
         return;
       }
 
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-
-      if (!email || !password) {
-        showMessage("Please enter your email and password.");
+      if (data.user && data.user.identities &&
+          data.user.identities.length === 0) {
+        showMessage("This email may already be registered. Try logging in.");
         return;
       }
 
-      if (password.length < 6) {
-        showMessage("Your password must contain at least 6 characters.");
-        return;
-      }
-
-      if (signupButton) {
-        signupButton.disabled = true;
-        signupButton.textContent = "Creating account...";
-      }
-
-      showMessage("Connecting securely...");
-
-      try {
-        const client = getSupabaseClient();
-
-        const { data, error } = await client.auth.signUp({
-          email: email,
-          password: password
-        });
-
-        if (error) {
-          throw error;
-        }
-
-        if (data.session) {
-          showMessage(
-            "Your account has been created successfully!"
-          );
-        } else {
-          showMessage(
-            "Registration submitted. Please check your email for a confirmation link."
-          );
-        }
-
-        form.reset();
-
-      } catch (error) {
-        console.error("Account registration error:", error);
-
+      if (data.session) {
+        showMessage("Account created successfully! You are now signed in.");
+      } else {
         showMessage(
-          "Registration failed: " +
-          (error.message || "Please try again.")
+          "Account created! Check your email for a confirmation link before logging in."
         );
-
-      } finally {
-        if (signupButton) {
-          signupButton.disabled = false;
-          signupButton.textContent = "Create account";
-        }
       }
-    });
-  }
-});
+
+      form.reset();
+
+    } catch (error) {
+      console.error("Sign-up error:", error);
+      showMessage("Something went wrong: " + error.message);
+    } finally {
+      if (signupButton) {
+        signupButton.disabled = false;
+        signupButton.textContent = "Create account";
+      }
+    }
+  });
+}
