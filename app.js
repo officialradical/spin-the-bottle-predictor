@@ -1,101 +1,127 @@
+// ========================================
+// SUPABASE CONFIGURATION
+// ========================================
+
 const SUPABASE_URL = "https://fcxdazlpeagmuagsayja.supabase.co";
+
 const SUPABASE_KEY = "sb_publishable_DpRoplNSvHveMpStM5NolQ_ofoVRbeL";
 
 let supabaseClient = null;
 
-function showMessage(text, success = false) {
-    const message = document.getElementById("message");
+// ========================================
+// WEBSITE INITIALIZATION
+// ========================================
 
-    if (message) {
-        message.textContent = text;
-        message.style.color = success ? "#4ade80" : "#ff7777";
-    } else {
-        alert(text);
-    }
-}
-
-function loadSupabase() {
-    return new Promise((resolve, reject) => {
-        if (window.supabase) {
-            resolve(window.supabase);
-            return;
-        }
-
-        const script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-
-        script.onload = () => {
-            if (window.supabase) {
-                resolve(window.supabase);
-            } else {
-                reject(new Error("Supabase failed to initialize."));
-            }
-        };
-
-        script.onerror = () => {
-            reject(new Error("Could not load the account service. Check your internet connection."));
-        };
-
-        document.head.appendChild(script);
-    });
-}
-
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const year = document.getElementById("year");
     const result = document.getElementById("result");
     const predictBtn = document.getElementById("predictBtn");
+
     const form = document.getElementById("signupForm");
     const emailInput = document.getElementById("signupEmail");
     const passwordInput = document.getElementById("signupPassword");
     const signupButton = document.getElementById("signupButton");
+    const message = document.getElementById("message");
 
+    // Update copyright year
     if (year) {
         year.textContent = new Date().getFullYear();
     }
 
-    // Demo button
+    // Display messages on the page
+    function showMessage(text, success = false) {
+        if (message) {
+            message.textContent = text;
+            message.style.color = success ? "#4ade80" : "#ff7777";
+        }
+    }
+
+    // ========================================
+    // CONNECT TO SUPABASE
+    // ========================================
+
+    try {
+        if (!window.supabase) {
+            throw new Error(
+                "Supabase did not load. Check your internet connection."
+            );
+        }
+
+        supabaseClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+
+    } catch (error) {
+        console.error("Supabase connection error:", error);
+    }
+
+    // ========================================
+    // UP / DOWN DEMO
+    // ========================================
+
     if (predictBtn && result) {
         predictBtn.addEventListener("click", () => {
-            result.textContent =
-                "Demo result: " + (Math.random() < 0.5 ? "UP" : "DOWN");
+            const outcome = Math.random() < 0.5 ? "UP" : "DOWN";
+
+            result.textContent = "Demo result: " + outcome;
         });
     }
 
-    // Always attach the registration handler
+    // ========================================
+    // CREATE ACCOUNT
+    // ========================================
+
     if (form) {
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
 
-            const email = emailInput?.value.trim();
-            const password = passwordInput?.value;
+            // Read the correct fields from index.html
+            const email = emailInput
+                ? emailInput.value.trim()
+                : "";
 
-            if (!email || !password) {
-                showMessage("Please enter your email and password.");
+            const password = passwordInput
+                ? passwordInput.value
+                : "";
+
+            // Validate email
+            if (!email) {
+                showMessage("Please enter your email address.");
+                return;
+            }
+
+            // Validate password
+            if (!password) {
+                showMessage("Please enter your password.");
                 return;
             }
 
             if (password.length < 6) {
-                showMessage("Your password must contain at least 6 characters.");
+                showMessage(
+                    "Your password must contain at least 6 characters."
+                );
                 return;
             }
 
+            // Check Supabase connection
+            if (!supabaseClient) {
+                showMessage(
+                    "Account service is unavailable. Refresh and try again."
+                );
+                return;
+            }
+
+            // Prevent multiple submissions
             if (signupButton) {
                 signupButton.disabled = true;
                 signupButton.textContent = "Creating account...";
             }
 
-            showMessage("Connecting to create your account...", true);
+            showMessage("Creating your account...", true);
 
             try {
-                const library = await loadSupabase();
-
-                if (!supabaseClient) {
-                    supabaseClient = library.createClient(
-                        SUPABASE_URL,
-                        SUPABASE_KEY
-                    );
-                }
-
+                // Create account using Supabase Authentication
                 const { data, error } =
                     await supabaseClient.auth.signUp({
                         email: email,
@@ -106,24 +132,43 @@ document.addEventListener("DOMContentLoaded", () => {
                     throw error;
                 }
 
+                // Account created and user logged in
                 if (data.session) {
                     showMessage(
-                        "Account created successfully! You are logged in.",
+                        "Account created successfully! You are now logged in.",
                         true
                     );
+
+                    form.reset();
+
                 } else if (data.user) {
                     showMessage(
-                        "Account created, but no active login session was returned. Check that email confirmation is disabled in Supabase.",
-                        true
+                        "Your account was created, but you are not logged in. Check that email confirmation is disabled in Supabase."
+                    );
+
+                } else {
+                    showMessage(
+                        "We could not confirm account creation. Please try again."
+                    );
+                }
+
+            } catch (error) {
+                console.error("Account creation error:", error);
+
+                if (
+                    error.message &&
+                    error.message.toLowerCase().includes("already registered")
+                ) {
+                    showMessage(
+                        "This email is already registered. Please log in instead."
                     );
                 } else {
                     showMessage(
-                        "The account could not be confirmed. Please try again."
+                        "Registration failed: " +
+                        (error.message || "Please try again.")
                     );
                 }
-            } catch (error) {
-                console.error("Signup error:", error);
-                showMessage("Error: " + error.message);
+
             } finally {
                 if (signupButton) {
                     signupButton.disabled = false;
@@ -131,7 +176,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         });
+
     } else {
-        console.error("Signup form not found. Check index.html.");
+        console.error(
+            "Signup form not found. Check the form ID in index.html."
+        );
     }
 });
