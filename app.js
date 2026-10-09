@@ -1,100 +1,74 @@
-// ========================================
-// SUPABASE CONFIGURATION
-// ========================================
+// SUPABASE PROJECT SETTINGS
+const SUPABASE_URL = "PASTE_YOUR_SUPABASE_PROJECT_URL_HERE";
+const SUPABASE_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE";
 
-const SUPABASE_URL = "https://fcxdazlpeagmuagsayja.supabase.co";
+document.addEventListener("DOMContentLoaded", async () => {
+  const get = (id) => document.getElementById(id);
 
-// Use the exact publishable key from your Supabase project.
-const SUPABASE_KEY =
-  "sb_publishable_DpRoplNSvHveMpStM5NolQ_ofoVRbeL";
+  const signupForm = get("signupForm");
+  const loginForm = get("loginForm");
 
+  const signupButton = get("signupButton");
+  const loginButton = get("loginButton");
 
-// ========================================
-// START THE WEBSITE
-// ========================================
+  const message = get("message");
+  const loginMessage = get("loginMessage");
 
-document.addEventListener("DOMContentLoaded", async function () {
-  const year = document.getElementById("year");
+  const account = get("account");
+  const dashboard = get("userDashboard");
 
-  const form = document.getElementById("signupForm");
-  const emailInput = document.getElementById("signupEmail");
-  const passwordInput = document.getElementById("signupPassword");
-  const signupButton = document.getElementById("signupButton");
-  const message = document.getElementById("message");
+  const dashboardEmail = get("dashboardEmail");
+  const dashboardUserId = get("dashboardUserId");
+  const dashboardMessage = get("dashboardMessage");
 
-  const dashboard = document.getElementById("userDashboard");
-  const dashboardEmail = document.getElementById("dashboardEmail");
-  const dashboardUserId = document.getElementById("dashboardUserId");
-  const dashboardMessage = document.getElementById("dashboardMessage");
-  const logoutButton = document.getElementById("logoutButton");
+  const logoutButton = get("logoutButton");
 
-  const accountSection = document.getElementById("account");
-
-  const predictButton = document.getElementById("predictBtn");
-  const result = document.getElementById("result");
-
-  if (year) {
-    year.textContent = new Date().getFullYear();
+  if (get("year")) {
+    get("year").textContent = new Date().getFullYear();
   }
 
+  function showMessage(element, text, success = false) {
+    if (!element) return;
 
-  // ========================================
-  // DISPLAY MESSAGES
-  // ========================================
-
-  function showMessage(text, success = false) {
-    if (!message) return;
-
-    message.textContent = text;
-    message.style.color = success ? "#4ade80" : "#ff7777";
+    element.textContent = text;
+    element.style.color = success ? "#4ade80" : "#ff8585";
   }
-
-
-  // ========================================
-  // DISPLAY USER DASHBOARD
-  // ========================================
 
   function showDashboard(user) {
     if (!user) {
-      if (dashboard) {
-        dashboard.hidden = true;
-      }
-
-      if (accountSection) {
-        accountSection.hidden = false;
-      }
-
+      if (dashboard) dashboard.hidden = true;
+      if (account) account.hidden = false;
       return;
     }
 
-    if (dashboard) {
-      dashboard.hidden = false;
-    }
+    if (dashboard) dashboard.hidden = false;
+    if (account) account.hidden = true;
 
     if (dashboardEmail) {
-      dashboardEmail.textContent = user.email || "Not available";
+      dashboardEmail.textContent = user.email || "Unavailable";
     }
 
     if (dashboardUserId) {
-      dashboardUserId.textContent = user.id || "Not available";
-    }
-
-    if (accountSection) {
-      accountSection.hidden = true;
+      dashboardUserId.textContent = user.id || "Unavailable";
     }
   }
 
-
-  // ========================================
-  // CONNECT TO SUPABASE
-  // ========================================
-
   let supabaseClient = null;
 
+  // CONNECT TO SUPABASE
   try {
     if (!window.supabase) {
       throw new Error(
-        "The Supabase library did not load. Refresh your website."
+        "The account service could not load. Refresh the website and try again."
+      );
+    }
+
+    if (
+      SUPABASE_URL.includes("PASTE_YOUR") ||
+      SUPABASE_KEY.includes("PASTE_YOUR")
+    ) {
+      throw new Error(
+        "Add your actual Supabase project URL and publishable key in app.js."
       );
     }
 
@@ -106,72 +80,59 @@ document.addEventListener("DOMContentLoaded", async function () {
     const { data, error } =
       await supabaseClient.auth.getSession();
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
-    if (data.session) {
-      showDashboard(data.session.user);
-    } else {
-      showDashboard(null);
-    }
+    showDashboard(data.session?.user || null);
 
     supabaseClient.auth.onAuthStateChange(
-      function (_event, session) {
-        showDashboard(session ? session.user : null);
+      (_event, session) => {
+        showDashboard(session?.user || null);
       }
     );
-
   } catch (error) {
-    console.error("Supabase connection error:", error);
+    console.error("Supabase setup error:", error);
 
     showMessage(
-      "Account connection failed: " + error.message
+      message,
+      "Account service error: " + error.message
+    );
+
+    showMessage(
+      loginMessage,
+      "Account service error: " + error.message
     );
   }
 
-
-  // ========================================
   // UP / DOWN DEMO
-  // ========================================
+  const predictButton = get("predictBtn");
+  const result = get("result");
 
   if (predictButton && result) {
-    predictButton.addEventListener("click", function () {
-      const outcome =
-        Math.random() < 0.5 ? "UP" : "DOWN";
-
+    predictButton.addEventListener("click", () => {
+      const outcome = Math.random() < 0.5 ? "UP" : "DOWN";
       result.textContent = "Demo result: " + outcome;
     });
   }
 
-
-  // ========================================
   // CREATE ACCOUNT
-  // ========================================
-
-  if (form) {
-    form.addEventListener("submit", async function (event) {
+  if (signupForm) {
+    signupForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      if (!emailInput || !passwordInput || !signupButton) {
-        showMessage(
-          "The registration form is missing required fields."
-        );
-        return;
-      }
-
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
+      const email = get("signupEmail").value.trim();
+      const password = get("signupPassword").value;
 
       if (!email || !password) {
         showMessage(
-          "Please enter your email address and password."
+          message,
+          "Please enter your email and password."
         );
         return;
       }
 
       if (password.length < 6) {
         showMessage(
+          message,
           "Your password must contain at least 6 characters."
         );
         return;
@@ -179,7 +140,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       if (!supabaseClient) {
         showMessage(
-          "The account service is not connected. Please refresh the page."
+          message,
+          "The account service is not connected. Check your Supabase settings."
         );
         return;
       }
@@ -187,7 +149,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       signupButton.disabled = true;
       signupButton.textContent = "Creating account...";
 
-      showMessage("Creating your account...", true);
+      showMessage(
+        message,
+        "Creating your account...",
+        true
+      );
 
       try {
         const { data, error } =
@@ -196,66 +162,51 @@ document.addEventListener("DOMContentLoaded", async function () {
             password: password
           });
 
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
 
-        // Account created and user logged in.
         if (data.user && data.session) {
-          form.reset();
+          signupForm.reset();
 
           showDashboard(data.user);
 
-          if (dashboardMessage) {
-            dashboardMessage.textContent =
-              "Your account was created successfully. You are now logged in.";
-
-            dashboardMessage.style.color = "#4ade80";
-          }
-
-          if (dashboard) {
-            dashboard.scrollIntoView({
-              behavior: "smooth",
-              block: "start"
-            });
-          }
-
-          return;
-        }
-
-        // Account created but email confirmation is still required.
-        if (data.user && !data.session) {
           showMessage(
-            "Your account was created, but Supabase did not start a login session. Check that Confirm email is turned OFF in Supabase Authentication settings."
+            dashboardMessage,
+            "Account created successfully! You are now logged in.",
+            true
           );
 
-          return;
+          dashboard.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+          });
+
+        } else if (data.user) {
+          showMessage(
+            message,
+            "Your account was created, but no login session was returned. Check that Confirm email is turned off in Supabase."
+          );
+
+        } else {
+          showMessage(
+            message,
+            "The account was not created. Please try again."
+          );
         }
 
-        showMessage(
-          "We could not complete registration. Please try again."
-        );
-
       } catch (error) {
-        console.error("Registration error:", error);
+        console.error("Signup error:", error);
 
         let errorText = error.message || "Please try again.";
 
-        if (
-          errorText.toLowerCase().includes("already registered")
-        ) {
+        if (/already registered/i.test(errorText)) {
           errorText =
-            "This email already has an account. Please use another email or sign in.";
+            "This email is already registered. Please use the login form.";
         }
 
-        if (
-          errorText.toLowerCase().includes("invalid api key")
-        ) {
-          errorText =
-            "The Supabase key is incorrect. Check the publishable key in your Supabase project.";
-        }
-
-        showMessage("Registration failed: " + errorText);
+        showMessage(
+          message,
+          "Registration failed: " + errorText
+        );
 
       } finally {
         signupButton.disabled = false;
@@ -264,16 +215,82 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
+  // LOG IN
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
 
-  // ========================================
-  // LOG OUT
-  // ========================================
+      const email = get("loginEmail").value.trim();
+      const password = get("loginPassword").value;
 
-  if (logoutButton) {
-    logoutButton.addEventListener("click", async function () {
-      if (!supabaseClient) {
+      if (!email || !password) {
+        showMessage(
+          loginMessage,
+          "Please enter your email and password."
+        );
         return;
       }
+
+      if (!supabaseClient) {
+        showMessage(
+          loginMessage,
+          "The account service is not connected. Check your Supabase settings."
+        );
+        return;
+      }
+
+      loginButton.disabled = true;
+      loginButton.textContent = "Logging in...";
+
+      showMessage(
+        loginMessage,
+        "Signing you in...",
+        true
+      );
+
+      try {
+        const { data, error } =
+          await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+          });
+
+        if (error) throw error;
+
+        showDashboard(data.user);
+        loginForm.reset();
+
+        showMessage(
+          dashboardMessage,
+          "You are now logged in.",
+          true
+        );
+
+        dashboard.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+      } catch (error) {
+        console.error("Login error:", error);
+
+        showMessage(
+          loginMessage,
+          "Login failed: " +
+          (error.message || "Check your email and password.")
+        );
+
+      } finally {
+        loginButton.disabled = false;
+        loginButton.textContent = "Log in";
+      }
+    });
+  }
+
+  // LOG OUT
+  if (logoutButton) {
+    logoutButton.addEventListener("click", async () => {
+      if (!supabaseClient) return;
 
       logoutButton.disabled = true;
 
@@ -281,40 +298,30 @@ document.addEventListener("DOMContentLoaded", async function () {
         const { error } =
           await supabaseClient.auth.signOut();
 
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
 
         showDashboard(null);
 
-        if (dashboardMessage) {
-          dashboardMessage.textContent =
-            "You have logged out successfully.";
+        showMessage(
+          dashboardMessage,
+          "You have logged out.",
+          true
+        );
 
-          dashboardMessage.style.color = "#4ade80";
-        }
-
-        if (accountSection) {
-          accountSection.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-          });
-        }
+        account.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
 
       } catch (error) {
-        console.error("Logout error:", error);
-
-        if (dashboardMessage) {
-          dashboardMessage.textContent =
-            "Logout failed: " + error.message;
-
-          dashboardMessage.style.color = "#ff7777";
-        }
+        showMessage(
+          dashboardMessage,
+          "Logout failed: " + error.message
+        );
 
       } finally {
         logoutButton.disabled = false;
       }
     });
   }
-
 });
