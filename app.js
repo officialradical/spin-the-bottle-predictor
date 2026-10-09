@@ -1,1 +1,19 @@
-document.getElementById("year").textContent=new Date().getFullYear();const outcome=document.getElementById("outcome"),toast=document.getElementById("toast");function message(text){toast.textContent=text;toast.hidden=false;clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>toast.hidden=true,3500)}document.getElementById("try").addEventListener("click",()=>{const value=Math.random()<.5?"UP":"DOWN";outcome.textContent=value;outcome.style.color=value==="UP"?"var(--mint)":"#ff9bba";message("Demo result only — not a real prediction.")});document.getElementById("start").addEventListener("click",()=>{document.getElementById("account").scrollIntoView({behavior:"smooth"});message("Account registration needs secure backend setup.")});document.getElementById("accountBtn").addEventListener("click",()=>message("Registration is not connected yet. No account was created."));
+// Supabase connection settings
+const SUPABASE_URL = "https://fcxdazlpeagmuagsayja.supabase.co/rest/v1/";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_DpRoplNSvHveMpStM5NolQ_ofoVRbeL";
+
+// Update the footer year
+const yearElement = document.getElementById("year");
+if (yearElement) {
+  yearElement.textContent = new Date().getFullYear();
+}
+
+// Check that the connection settings have been added
+if (
+  SUPABASE_URL.startsWith("https://") &&
+  SUPABASE_PUBLISHABLE_KEY.startsWith("sb_publishable_")
+) {
+  console.log("Supabase settings are configured.");
+} else {
+  console.log("Please add your Supabase URL and publishable key.");
+}
