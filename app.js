@@ -1,24 +1,33 @@
-// ========================================
+// ==========================================
 // SUPABASE CONFIGURATION
-// ========================================
+// ==========================================
 
-const SUPABASE_URL = "PASTE_YOUR_EXISTING_SUPABASE_PROJECT_URL";
-const SUPABASE_KEY = "PASTE_YOUR_EXISTING_SUPABASE_PUBLISHABLE_KEY";
+const SUPABASE_URL = "https://fcxdazlpeagmuagsayja.supabase.co";
+
+const SUPABASE_KEY = "sb_publishable_DpRoplNSvHveMpStM5NolQ_ofoVRbeL";
 
 let supabaseClient = null;
 
-// ========================================
+// ==========================================
 // INITIALIZE WEBSITE
-// ========================================
+// ==========================================
 
-document.addEventListener("DOMContentLoaded", async () => {
-    const message = document.getElementById("message");
+document.addEventListener("DOMContentLoaded", function () {
     const year = document.getElementById("year");
+    const result = document.getElementById("result");
+    const predictBtn = document.getElementById("predictBtn");
+    const signupForm = document.getElementById("signupForm");
+    const emailInput = document.getElementById("signupEmail");
+    const passwordInput = document.getElementById("signupPassword");
+    const signupButton = document.getElementById("signupButton");
+    const message = document.getElementById("message");
 
+    // Update footer year
     if (year) {
         year.textContent = new Date().getFullYear();
     }
 
+    // Display messages
     function showMessage(text, success = false) {
         if (message) {
             message.textContent = text;
@@ -28,27 +37,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // Load Supabase
+    // Connect to Supabase
     try {
         if (!window.supabase) {
-            await new Promise((resolve, reject) => {
-                const script = document.createElement("script");
-                script.src =
-                    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-
-                script.onload = resolve;
-                script.onerror = () =>
-                    reject(new Error("Could not load Supabase."));
-
-                document.head.appendChild(script);
-            });
-        }
-
-        if (
-            SUPABASE_URL.includes("PASTE_") ||
-            SUPABASE_KEY.includes("PASTE_")
-        ) {
-            showMessage("Please configure your Supabase URL and publishable key.");
+            showMessage(
+                "The account service could not load. Refresh the page and try again."
+            );
             return;
         }
 
@@ -57,129 +51,117 @@ document.addEventListener("DOMContentLoaded", async () => {
             SUPABASE_KEY
         );
     } catch (error) {
-        console.error(error);
-        showMessage("Connection failed. Please refresh and try again.");
+        console.error("Supabase initialization error:", error);
+        showMessage("Could not connect to the account service.");
         return;
     }
 
-    // ========================================
+    // ==========================================
     // UP / DOWN DEMO
-    // ========================================
+    // ==========================================
 
-    const predictButton = document.getElementById("predictBtn");
-    const result = document.getElementById("result");
-
-    if (predictButton && result) {
-        predictButton.addEventListener("click", () => {
-            result.textContent =
-                Math.random() < 0.5 ? "UP" : "DOWN";
+    if (predictBtn && result) {
+        predictBtn.addEventListener("click", function () {
+            const outcome = Math.random() < 0.5 ? "UP" : "DOWN";
+            result.textContent = "Demo result: " + outcome;
         });
     }
 
-    // ========================================
-    // ACCOUNT REGISTRATION
-    // ========================================
+    // ==========================================
+    // CREATE ACCOUNT
+    // ==========================================
 
-    const signupButton =
-        document.getElementById("createAccountBtn") ||
-        document.getElementById("signupBtn");
-
-    const emailInput =
-        document.getElementById("email") ||
-        document.getElementById("signupEmail") ||
-        document.querySelector('input[type="email"]');
-
-    const passwordInput =
-        document.getElementById("password") ||
-        document.getElementById("signupPassword") ||
-        document.querySelector('input[type="password"]');
-
-    async function createAccount(event) {
-        if (event) {
+    if (signupForm) {
+        signupForm.addEventListener("submit", async function (event) {
             event.preventDefault();
-        }
 
-        if (!supabaseClient) {
-            showMessage("The account service is not connected.");
-            return;
-        }
+            const email = emailInput
+                ? emailInput.value.trim()
+                : "";
 
-        const email = emailInput?.value.trim();
-        const password = passwordInput?.value;
+            const password = passwordInput
+                ? passwordInput.value
+                : "";
 
-        if (!email || !password) {
-            showMessage("Please enter your email and password.");
-            return;
-        }
+            if (!email || !password) {
+                showMessage("Please enter your email and password.");
+                return;
+            }
 
-        if (password.length < 6) {
-            showMessage("Your password must contain at least 6 characters.");
-            return;
-        }
+            if (password.length < 6) {
+                showMessage(
+                    "Your password must contain at least 6 characters."
+                );
+                return;
+            }
 
-        if (signupButton) {
-            signupButton.disabled = true;
-            signupButton.textContent = "Creating account...";
-        }
+            if (signupButton) {
+                signupButton.disabled = true;
+                signupButton.textContent = "Creating account...";
+            }
 
-        try {
-            const { data, error } =
-                await supabaseClient.auth.signUp({
-                    email: email,
-                    password: password
-                });
+            showMessage("Creating your account...", true);
 
+            try {
+                const { data, error } =
+                    await supabaseClient.auth.signUp({
+                        email: email,
+                        password: password
+                    });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data.session) {
+                    showMessage(
+                        "Account created successfully! You are now logged in.",
+                        true
+                    );
+                } else if (data.user) {
+                    showMessage(
+                        "Your account was created, but no active session was returned. Check your Supabase email-confirmation settings.",
+                        true
+                    );
+                } else {
+                    showMessage(
+                        "Account creation could not be confirmed. Please try again."
+                    );
+                }
+            } catch (error) {
+                console.error("Registration error:", error);
+
+                showMessage(
+                    "Registration failed: " +
+                    (error.message || "Please try again.")
+                );
+            } finally {
+                if (signupButton) {
+                    signupButton.disabled = false;
+                    signupButton.textContent = "Create account";
+                }
+            }
+        });
+    } else {
+        console.error("Could not find the signup form in index.html.");
+    }
+
+    // ==========================================
+    // CHECK LOGIN SESSION
+    // ==========================================
+
+    supabaseClient.auth.getSession()
+        .then(({ data, error }) => {
             if (error) {
-                throw error;
+                console.error("Session check error:", error);
+                return;
             }
 
             if (data.session) {
-                showMessage(
-                    "Account created successfully! You are now logged in.",
-                    true
-                );
-            } else if (data.user) {
-                showMessage(
-                    "Account submitted. Check that email confirmation is disabled in Supabase.",
-                    true
-                );
-            } else {
-                showMessage("Account creation could not be confirmed.");
+                console.log("User is logged in.");
             }
-        } catch (error) {
-            console.error("Registration error:", error);
-            showMessage("Registration failed: " + error.message);
-        } finally {
-            if (signupButton) {
-                signupButton.disabled = false;
-                signupButton.textContent = "Create account";
-            }
-        }
-    }
-
-    if (signupButton) {
-        signupButton.addEventListener("click", createAccount);
-    }
-
-    const signupForm =
-        document.getElementById("signupForm") ||
-        document.getElementById("signup-form");
-
-    if (signupForm) {
-        signupForm.addEventListener("submit", createAccount);
-    }
-
-    // ========================================
-    // CHECK EXISTING LOGIN
-    // ========================================
-
-    try {
-        const { data } = await supabaseClient.auth.getSession();
-
-        if (data.session) {
-            console.log("A user is already logged in.");
-        }
-    } catch (error) {
-        console.error("Session check failed:", error);
-    }
+        })
+        .catch((error) => {
+            console.error("Could not check login session:", error);
+        });
 });
