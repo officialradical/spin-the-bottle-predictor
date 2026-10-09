@@ -1,134 +1,99 @@
-// SUPABASE PROJECT SETTINGS
-const SUPABASE_URL = "https://fcxdazlpeagmuagsayja.supabase.co";
-const SUPABASE_KEY = "sb_publishable_DpRoplNSvHveMpStM5NolQ_ofoVRbeL";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101322">
+  <title>Spin the Bottle Predictor</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="./index.html">✦ SPIN THE BOTTLE PREDICTOR</a>
+    <nav>
+      <a href="#account">Log in / Sign up</a>
+    </nav>
+  </header>
 
-// Load Supabase library
-function loadSupabase() {
-  return new Promise((resolve, reject) => {
-    if (window.supabase) {
-      resolve(window.supabase);
-      return;
-    }
+  <main>
+    <section class="hero">
+      <div class="intro">
+        <p>YOUR GAME HUB</p>
+        <h1>Make your next move <span>with confidence.</span></h1>
+        <p>
+          Explore the UP/DOWN demo and manage your account
+          in one simple place.
+        </p>
+        <a class="button" href="#demo">Get started ↗</a>
+        <a href="#how">How it works</a>
+        <p>✓ Mobile-friendly dashboard · ✓ Simple</p>
+      </div>
+    </section>
 
-    const script = document.createElement("script");
-    script.src =
-      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js";
+    <section class="card" id="demo">
+      <p>SAMPLE OUTCOME</p>
+      <h2>UP / DOWN DEMO</h2>
+      <p>Try the demonstration below.</p>
 
-    script.onload = () => resolve(window.supabase);
-    script.onerror = () =>
-      reject(new Error("Could not load Supabase. Check your internet connection."));
+      <div class="result-card">
+        <p>DEMO RESULT</p>
+        <h2 id="result">Ready to try?</h2>
+        <button id="predictBtn" type="button">Try demo ↻</button>
+      </div>
 
-    document.head.appendChild(script);
-  });
-}
+      <p>
+        Demo results are random illustrations, not predictions
+        or guarantees of real outcomes.
+      </p>
+    </section>
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // Update footer year
-  const year = document.getElementById("year");
-  if (year) {
-    year.textContent = new Date().getFullYear();
-  }
+    <section class="features" id="how">
+      <article>
+        <h2>Simple dashboard</h2>
+        <p>A clear, mobile-friendly experience.</p>
+      </article>
 
-  // Demo button
-  const predictBtn = document.getElementById("predictBtn");
-  const result = document.getElementById("result");
+      <article>
+        <h2>Voucher access</h2>
+        <p>Voucher features require a connected backend.</p>
+      </article>
+    </section>
 
-  if (predictBtn && result) {
-    predictBtn.addEventListener("click", () => {
-      const outcomes = ["UP", "DOWN"];
-      const choice =
-        outcomes[Math.floor(Math.random() * outcomes.length)];
+    <section class="notice" id="account">
+      <h2>Create an account</h2>
+      <p>Register with your email address and a password.</p>
 
-      result.textContent = "Demo result: " + choice;
-    });
-  }
+      <form id="signupForm">
+        <label for="signupEmail">Email address</label>
+        <input
+          id="signupEmail"
+          type="email"
+          placeholder="Enter your email"
+          autocomplete="email"
+          required
+        >
 
-  // Replace the old account section with a working registration form
-  const account = document.getElementById("account");
+        <label for="signupPassword">Password</label>
+        <input
+          id="signupPassword"
+          type="password"
+          placeholder="At least 6 characters"
+          minlength="6"
+          autocomplete="new-password"
+          required
+        >
 
-  if (!account) return;
+        <button id="signupButton" type="submit">Create account</button>
+        <p id="message" role="status"></p>
+      </form>
+    </section>
+  </main>
 
-  account.innerHTML = `
-    <h2>Create an account</h2>
+  <footer>
+    <p>© <span id="year"></span> Spin the Bottle Predictor · Demo only.</p>
+  </footer>
 
-    <form id="signupForm">
-      <label for="signupEmail">Email address</label>
-      <input
-        id="signupEmail"
-        type="email"
-        placeholder="Enter your email"
-        autocomplete="email"
-        required
-      >
-
-      <label for="signupPassword">Password</label>
-      <input
-        id="signupPassword"
-        type="password"
-        placeholder="Create a password"
-        autocomplete="new-password"
-        minlength="6"
-        required
-      >
-
-      <button id="signupButton" type="submit">
-        Create account
-      </button>
-
-      <p id="message" role="status" aria-live="polite"></p>
-    </form>
-  `;
-
-  const form = document.getElementById("signupForm");
-  const message = document.getElementById("message");
-  const button = document.getElementById("signupButton");
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const email = document.getElementById("signupEmail").value.trim();
-    const password =
-      document.getElementById("signupPassword").value;
-
-    button.disabled = true;
-    button.textContent = "Creating account...";
-    message.textContent = "Connecting securely to Supabase...";
-
-    try {
-      const library = await loadSupabase();
-      const client = library.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      );
-
-      const { data, error } = await client.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: window.location.href.split("#")[0]
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.session) {
-        message.textContent =
-          "Account created successfully! You are now signed in.";
-      } else {
-        message.textContent =
-          "Registration submitted! Check your email for a confirmation link if requested.";
-      }
-
-      form.reset();
-    } catch (error) {
-      message.textContent =
-        "Registration failed: " +
-        (error.message || "Please try again.");
-
-      console.error("Supabase registration error:", error);
-    } finally {
-      button.disabled = false;
-      button.textContent = "Create account";
-    }
-  });
-});
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
