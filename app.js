@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const signupForm = $("signupForm");
   const loginForm = $("loginForm");
-
+const protectedContent = $("protectedContent");
   const signupButton = $("signupButton");
   const loginButton = $("loginButton");
   const logoutButton = $("logoutButton");
@@ -41,24 +41,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     element.style.color = success ? "#4ade80" : "#ff8585";
   }
 
+  
   function showDashboard(user) {
-    if (!user) {
-      if (dashboard) dashboard.hidden = true;
-      if (account) account.hidden = false;
-      return;
-    }
-
-    if (dashboard) dashboard.hidden = false;
-    if (account) account.hidden = true;
-
-    if (dashboardEmail) {
-      dashboardEmail.textContent = user.email || "";
-    }
-
-    if (dashboardUserId) {
-      dashboardUserId.textContent = user.id || "";
-    }
+  if (protectedContent) {
+    protectedContent.hidden = !user;
   }
+
+  if (!user) {
+    if (dashboard) dashboard.hidden = true;
+    if (account) account.hidden = false;
+    return;
+  }
+
+  if (dashboard) dashboard.hidden = false;
+  if (account) account.hidden = true;
+
+  if (dashboardEmail) {
+    dashboardEmail.textContent = user.email || "";
+  }
+
+  if (dashboardUserId) {
+    dashboardUserId.textContent = user.id || "";
+  }
+}
 
   let client;
 
